@@ -111,7 +111,7 @@ public class Reader {
      * @param title
      * @return 
      */
-    public String delete(String title) {
+    public String delete(int id) {
         
         String result = "";
         
@@ -120,7 +120,8 @@ public class Reader {
         { 
             Document doc = (Document)itr.next();
             
-            if (doc.getTitle().toLowerCase().contains(title.toLowerCase())) {
+           
+            if (doc.getId() == id) {
                 result += doc.toString();
                 result += "\ndeleted...\n";
                 itr.remove(); 

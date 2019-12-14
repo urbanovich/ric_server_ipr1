@@ -9,6 +9,8 @@ import java.io.*;
 import java.net.*;
 import org.json.simple.*;
 import org.json.simple.parser.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 
 import Helpers.Reader;
 
@@ -17,31 +19,32 @@ import Helpers.Reader;
  * @author dzmitry
  */
 public class ServerThread extends Thread {
+    
     private Socket socket;
  
+    private DataInputStream dis;
+    
+    private DataOutputStream dos;
+    
     public ServerThread(Socket socket) {
         this.socket = socket;
     }
  
     public void run() {
         try {
-            InputStream input = socket.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
- 
-            OutputStream output = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(output, true);
- 
+
+            this.dis = new DataInputStream(this.socket.getInputStream());
+            this.dos = new DataOutputStream(this.socket.getOutputStream());
+            
             Reader helperReader = new Reader();
         
             helperReader.read();
             
-            String text;
+            String request, command, id, title, content;
  
-            do {
-                text = reader.readLine();
-                
-                String request = new StringBuilder(text).toString();
-                
+            do {                
+                request = this.dis.readUTF();
+                                
                 JSONObject document = new JSONObject();
                 
                 try {
@@ -51,35 +54,40 @@ public class ServerThread extends Thread {
                     System.out.println(e.getMessage());
                 }
                 
-                String command = (String) document.get("command");
+                command = (String) document.get("command");
+                String result = new String();
                 
                 switch (Integer.parseInt(command)) {
                     case 1 :
-                        
-                        String id = (String) document.get("id");
-                        String title = (String) document.get("title");
-                        String content = (String) document.get("content");
+                        id = (String) document.get("id");
+                        title = (String) document.get("title");
+                        content = (String) document.get("content");
                         helperReader.add(Integer.parseInt(id), title, content);
-                        
+                        result = helperReader.displayAll();
                         break;
                     case 2 :
-                        
+                        String search = (String) document.get("search");
+                        result = helperReader.search(search);
                         break;
                     case 3 :
-                        
+                        id = (String) document.get("id");
+                        result = helperReader.delete(Integer.parseInt(id));
                         break;
                     case 4 :
+                        result = helperReader.displayAll();
+                        break;
+                    case 5 :
                         helperReader.save();
                         break;
                 }
-
-                String list = helperReader.displayAll();
-                
-                writer.println(list);
+              
+                this.dos.writeUTF(result);
  
-            } while (!text.equals("4"));
+            } while (!command.equals("5"));
  
-            socket.close();
+            this.socket.close();
+            this.dos.close();
+            this.dis.close();
         } catch (IOException ex) {
             System.out.println("Server exception: " + ex.getMessage());
             ex.printStackTrace();

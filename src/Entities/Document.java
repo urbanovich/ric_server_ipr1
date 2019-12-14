@@ -39,7 +39,7 @@ public class Document implements Entity {
     
     @Override
     public String toString() {
-        return "id: " + this.id + "\ntitle: " + this.title + "\ncontent: " + this.content.substring(30) + "\n";
+        return "id: " + this.id + "\n" + "title: " + this.title + "\n" + "content: " + this.content + "\n";
     }
 
     @Override
